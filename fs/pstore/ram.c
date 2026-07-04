@@ -46,10 +46,16 @@
 #define memcpy memcpy_toio
 #endif
 
-static ulong record_size = MIN_MEM_SIZE;
+/*
+ * Bumped from the upstream MIN_MEM_SIZE (4KB) default: with
+ * KMSG_DUMP_RESTART now also captured (see ramoops_pstore_write_buf
+ * below), a handful of larger, separately-preserved per-reboot records is
+ * more useful for bootloop diagnosis than dozens of tiny 4KB ones.
+ */
+static ulong record_size = 65536UL;
 module_param(record_size, ulong, 0400);
 MODULE_PARM_DESC(record_size,
-		"size of each dump done on oops/panic");
+		"size of each dump done on oops/panic/restart");
 
 #ifdef CONFIG_PSTORE_CONSOLE_SIZE
 static ulong ramoops_console_size = CONFIG_PSTORE_CONSOLE_SIZE;
@@ -333,11 +339,19 @@ static int notrace ramoops_pstore_write_buf(enum pstore_type_id type,
 	if (type != PSTORE_TYPE_DMESG)
 		return -EINVAL;
 
-	/* Out of the various dmesg dump types, ramoops is currently designed
-	 * to only store crash logs, rather than storing general kernel logs.
+	/*
+	 * Upstream ramoops only snapshots oops/panic. Also snapshot a clean
+	 * reboot/restart (kernel_restart() -> kmsg_dump(KMSG_DUMP_RESTART))
+	 * into its own dmesg-ramoops-N record: on this device a userspace
+	 * crash-loop makes init call reboot() with no kernel oops/panic at
+	 * all, so the only trace of what led up to it was the live,
+	 * continuously-overwritten console ring -- easily clobbered by
+	 * whatever boots next (e.g. a TWRP session read afterward). A
+	 * dedicated frozen record per reboot survives that.
 	 */
 	if (reason != KMSG_DUMP_OOPS &&
-	    reason != KMSG_DUMP_PANIC)
+	    reason != KMSG_DUMP_PANIC &&
+	    reason != KMSG_DUMP_RESTART)
 		return -EINVAL;
 
 	/* Skip Oopes when configured to do so. */
