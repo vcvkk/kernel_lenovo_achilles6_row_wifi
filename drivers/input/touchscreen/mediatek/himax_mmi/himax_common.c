@@ -3225,7 +3225,8 @@ FW_force_upgrade:
 #endif
 
 #ifdef HX_SMART_WAKEUP
-	ts->SMWP_enable = 0;
+	ts->SMWP_enable = 1;
+	ts->gesture_cust_en[0] = 1; /* Double Tap -> KEY_POWER (DT2W) */
 	wakeup_source_init(&ts->ts_SMWP_wake_lock, HIMAX_common_NAME);
 #endif
 #ifdef HX_HIGH_SENSE
