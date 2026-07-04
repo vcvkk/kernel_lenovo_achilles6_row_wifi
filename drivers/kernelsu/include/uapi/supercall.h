@@ -174,6 +174,13 @@ static const __u32 KSU_IOCTL_MANAGE_MARK = _IOC(_IOC_READ | _IOC_WRITE, 'K', 16,
 static const __u32 KSU_IOCTL_NUKE_EXT4_SYSFS = _IOC(_IOC_WRITE, 'K', 17, 0);
 static const __u32 KSU_IOCTL_ADD_TRY_UMOUNT = _IOC(_IOC_WRITE, 'K', 18, 0);
 static const __u32 KSU_IOCTL_SET_INIT_PGRP = _IO('K', 19);
+#ifdef CONFIG_KSU_SUSFS
+static const __u32 KSU_IOCTL_SUSFS_ADD_SUS_PATH = _IOC(_IOC_WRITE, 'K', 20, 0);
+static const __u32 KSU_IOCTL_SUSFS_ADD_SUS_MOUNT = _IOC(_IOC_WRITE, 'K', 21, 0);
+static const __u32 KSU_IOCTL_SUSFS_ADD_SUS_KSTAT = _IOC(_IOC_WRITE, 'K', 22, 0);
+static const __u32 KSU_IOCTL_SUSFS_UPDATE_SUS_KSTAT = _IOC(_IOC_WRITE, 'K', 23, 0);
+static const __u32 KSU_IOCTL_SUSFS_SET_UNAME = _IOC(_IOC_WRITE, 'K', 24, 0);
+#endif
 static const __u32 KSU_IOCTL_GET_HOOK_MODE = _IOC(_IOC_READ, 'K', 98, 0);
 static const __u32 KSU_IOCTL_GET_VERSION_TAG = _IOC(_IOC_READ, 'K', 99, 0);
 

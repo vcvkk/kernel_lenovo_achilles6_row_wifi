@@ -23,6 +23,35 @@
 
 #include "tiny_sulog.h"
 
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+
+static int do_susfs_add_sus_path(void __user *arg)
+{
+	return susfs_add_sus_path((struct st_susfs_sus_path __user *)arg);
+}
+
+static int do_susfs_add_sus_mount(void __user *arg)
+{
+	return susfs_add_sus_mount((struct st_susfs_sus_mount __user *)arg);
+}
+
+static int do_susfs_add_sus_kstat(void __user *arg)
+{
+	return susfs_add_sus_kstat((struct st_susfs_sus_kstat __user *)arg);
+}
+
+static int do_susfs_update_sus_kstat(void __user *arg)
+{
+	return susfs_update_sus_kstat((struct st_susfs_sus_kstat __user *)arg);
+}
+
+static int do_susfs_set_uname(void __user *arg)
+{
+	return susfs_set_uname((struct st_susfs_uname __user *)arg);
+}
+#endif // #ifdef CONFIG_KSU_SUSFS
+
 static int do_grant_root(void __user *arg)
 {
 	// we already check uid above on allowed_for_su()
@@ -867,6 +896,38 @@ static const struct ksu_ioctl_cmd_map ksu_ioctl_handlers[] = {
         .handler = do_set_init_pgrp,
         .perm_check = only_root
     },
+#ifdef CONFIG_KSU_SUSFS
+    {
+        .cmd = KSU_IOCTL_SUSFS_ADD_SUS_PATH,
+        .name = "SUSFS_ADD_SUS_PATH",
+        .handler = do_susfs_add_sus_path,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SUSFS_ADD_SUS_MOUNT,
+        .name = "SUSFS_ADD_SUS_MOUNT",
+        .handler = do_susfs_add_sus_mount,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SUSFS_ADD_SUS_KSTAT,
+        .name = "SUSFS_ADD_SUS_KSTAT",
+        .handler = do_susfs_add_sus_kstat,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SUSFS_UPDATE_SUS_KSTAT,
+        .name = "SUSFS_UPDATE_SUS_KSTAT",
+        .handler = do_susfs_update_sus_kstat,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SUSFS_SET_UNAME,
+        .name = "SUSFS_SET_UNAME",
+        .handler = do_susfs_set_uname,
+        .perm_check = manager_or_root
+    },
+#endif // #ifdef CONFIG_KSU_SUSFS
     {
         .cmd = KSU_IOCTL_GET_HOOK_MODE,
         .name = "GET_HOOK_MODE",
