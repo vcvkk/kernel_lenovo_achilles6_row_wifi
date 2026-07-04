@@ -55,7 +55,14 @@ static const char *handler[]= {
 	"Error"
 };
 
-int show_unhandled_signals = 0;
+/*
+ * Normally off on Android (userspace crash reporting via debuggerd/tombstones
+ * covers this) -- forced on here as a bootloop-diagnosis aid: with no adb/UART
+ * available, this is the only way to get "$comm[$pid]: unhandled fault ..."
+ * lines for a repeatedly-crashing early-boot process into the persistent
+ * pstore console log for later inspection from TWRP.
+ */
+int show_unhandled_signals = 1;
 
 /*
  * Dump out the contents of some kernel memory nicely...
