@@ -20,6 +20,10 @@ cp -r "$SCRIPT_DIR/anykernel/." "$WORKDIR/"
 cp "$KERNEL_IMAGE" "$WORKDIR/Image.gz-dtb"
 
 mkdir -p "$(dirname "$OUT_ZIP")"
+# Resolve to an absolute path before the subshell below cd's into $WORKDIR --
+# otherwise a relative $OUT_ZIP would be (mis)interpreted relative to
+# $WORKDIR instead of the caller's original working directory.
+OUT_ZIP="$(cd "$(dirname "$OUT_ZIP")" && pwd)/$(basename "$OUT_ZIP")"
 rm -f "$OUT_ZIP"
 
 (
