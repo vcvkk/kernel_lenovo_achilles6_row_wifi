@@ -1,0 +1,42 @@
+name: Build flashable release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu flex bison bc libssl-dev device-tree-compiler zip
+
+      - name: Generate defconfig
+        run: |
+          make O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- achilles6_row_wifi_defconfig
+
+      - name: Build Image.gz-dtb
+        run: |
+          make O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCFLAGS=-fcommon -j"$(nproc)" Image.gz-dtb
+
+      - name: Package flashable zip
+        run: |
+          ./packaging/build_flashable_zip.sh out/arch/arm64/boot/Image.gz-dtb out/achilles6_row_wifi-custom-kernel.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: achilles6_row_wifi-custom-kernel
+          path: out/achilles6_row_wifi-custom-kernel.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/achilles6_row_wifi-custom-kernel.zip
