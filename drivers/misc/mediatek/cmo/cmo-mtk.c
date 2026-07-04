@@ -22,33 +22,14 @@
 #include "cmo-mtk.h"
 
 /*
- * Flush the whole inner d-cache on the calling CPU. __inner_flush_dcache_all()
- * is the set/way routine in arch/arm64/mm/cache-mtk-v8.S. IRQs are disabled so
- * the CSSELR/CCSIDR cache-level selection inside it stays atomic against this
- * CPU being interrupted mid-walk.
+ * Weak fallback only. The real implementation lives in
+ * drivers/misc/mediatek/fiq_cache/mtk-fiq-cache.c and performs the flush via a
+ * secure-monitor call (MTK_SIP_KERNEL_CACHE_FLUSH_FIQ) in firmware, so the
+ * M4U flush path (smp_inner_dcache_flush_all -> mt_fiq_cache_flush_all under
+ * CONFIG_MTK_FIQ_CACHE=y) was never actually a no-op. This stub just keeps the
+ * tree linkable if that driver is ever disabled.
  */
-static void mtk_flush_inner_dcache_this_cpu(void *unused)
-{
-	unsigned long flags;
-
-	local_irq_save(flags);
-	__inner_flush_dcache_all();
-	local_irq_restore(flags);
-}
-
-/*
- * Real replacement for the former no-op weak stub. The vendor's original
- * mt_fiq_cache_flush_all() broadcast an inner-cache flush to every core via
- * FIQ; a plain per-CPU set/way clean+invalidate (each core walks up to the
- * Level of Coherency, covering its own L1 and the shared L2) achieves the same
- * result. This is on the M4U cache-maintenance path
- * (smp_inner_dcache_flush_all -> mt_fiq_cache_flush_all when
- * CONFIG_MTK_FIQ_CACHE=y), so leaving it a no-op corrupted M4U-mapped memory.
- */
-void mt_fiq_cache_flush_all(void)
-{
-	on_each_cpu(mtk_flush_inner_dcache_this_cpu, NULL, 1);
-}
+void __attribute__((weak)) mt_fiq_cache_flush_all(void) {}
 
 /*
  * inner_dcache_flush_all: Flush (clean + invalidate) the entire L1 data cache.
