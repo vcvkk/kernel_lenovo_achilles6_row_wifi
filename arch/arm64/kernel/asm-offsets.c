@@ -45,6 +45,17 @@ int main(void)
 #endif
   DEFINE(TI_CPU_EXCP,		offsetof(struct thread_info, cpu_excp));
   DEFINE(TI_REGS_ON_EXCP,	offsetof(struct thread_info, regs_on_excp));
+  /*
+   * thread_info is the first member of task_struct (required by
+   * current_thread_info() under CONFIG_THREAD_INFO_IN_TASK), so these
+   * are numerically identical to the TSK_TI_* offsets above -- provided
+   * as plain aliases for entry.S, which was reconstructed from upstream
+   * v4.9.337 (missing from the original vendor source drop) and refers
+   * to the pre-THREAD_INFO_IN_TASK offset names.
+   */
+  DEFINE(TI_FLAGS,		offsetof(struct thread_info, flags));
+  DEFINE(TI_PREEMPT,		offsetof(struct thread_info, preempt_count));
+  DEFINE(TI_ADDR_LIMIT,		offsetof(struct thread_info, addr_limit));
   DEFINE(TSK_STACK,		offsetof(struct task_struct, stack));
   BLANK();
   DEFINE(THREAD_CPU_CONTEXT,	offsetof(struct task_struct, thread.cpu_context));
@@ -96,7 +107,7 @@ int main(void)
   DEFINE(CLOCK_REALTIME,	CLOCK_REALTIME);
   DEFINE(CLOCK_MONOTONIC,	CLOCK_MONOTONIC);
   DEFINE(CLOCK_MONOTONIC_RAW,	CLOCK_MONOTONIC_RAW);
-  DEFINE(CLOCK_REALTIME_RES,	MONOTONIC_RES_NSEC);
+  DEFINE(CLOCK_REALTIME_RES,	offsetof(struct vdso_data, hrtimer_res));
   DEFINE(CLOCK_REALTIME_COARSE,	CLOCK_REALTIME_COARSE);
   DEFINE(CLOCK_MONOTONIC_COARSE,CLOCK_MONOTONIC_COARSE);
   DEFINE(CLOCK_COARSE_RES,	LOW_RES_NSEC);

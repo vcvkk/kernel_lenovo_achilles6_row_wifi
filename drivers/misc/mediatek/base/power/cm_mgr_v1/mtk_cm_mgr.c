@@ -463,7 +463,7 @@ void check_cm_mgr_status_internal(void)
 #else
 		total_bw = dvfsrc_get_emi_bw(QOS_EMI_BW_TOTAL) / 512;
 #endif /* defined(CONFIG_MACH_MT6775) || defined(CONFIG_MACH_MT6771) */
-		memset(count_ack, 0, ARRAY_SIZE(count_ack));
+		memset(count_ack, 0, sizeof(count_ack));
 
 		if (total_bw_value)
 			total_bw = total_bw_value;
@@ -478,7 +478,7 @@ void check_cm_mgr_status_internal(void)
 		}
 
 		/* get max loading */
-		memset(max_load, 0, ARRAY_SIZE(count_ack));
+		memset(max_load, 0, sizeof(max_load));
 
 		for_each_possible_cpu(i) {
 			int avg_load;

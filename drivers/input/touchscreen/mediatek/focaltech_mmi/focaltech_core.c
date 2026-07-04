@@ -140,7 +140,7 @@ static void fts_charger_notify_work(struct work_struct *work)
         mutex_unlock(&input_dev->mutex);
     } else  {
         if (mutex_lock_interruptible(&input_dev->mutex)) {
-            ("Failed to lock in mutex_lock_interruptible(&ts->lock).");
+            FTS_ERROR("Failed to lock in mutex_lock_interruptible(&ts->lock).");
             return;
         }
         ret = fts_write_reg(FTS_REG_CHARGER_MODE_EN, USB_DETECT_OUT);

@@ -214,7 +214,9 @@ static int mm8013_probe(struct i2c_client *client,
 	struct device *cdev = &client->dev;
 	int ret = 0;
 
-    power_supply_register(&client->dev, &mm8013_desc,NULL);
+    ret = PTR_ERR_OR_ZERO(power_supply_register(&client->dev, &mm8013_desc, NULL));
+    if (ret)
+        dev_warn(&client->dev, "failed to register power supply: %d\n", ret);
 
 	if (!i2c_check_functionality(client->adapter,
 				I2C_FUNC_SMBUS_WORD_DATA)) {

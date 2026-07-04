@@ -10,4 +10,8 @@ obj-$(CONFIG_KASAN)		+= kasan_init.o
 KASAN_SANITIZE_kasan_init.o	:= n
 KBUILD_CPPFLAGS += -Werror -I$(srctree)/drivers/misc/mediatek/include
 
-obj-$(CONFIG_MEDIATEK_SOLUTION) += cache-mtk-v8.o
+# cache-mtk-v8.o intentionally omitted: source file is missing from this
+# vendor tree (not present upstream either, and nothing else in-tree
+# references its symbols), so it cannot be safely reconstructed. Standard
+# arch/arm64/mm/cache.o (restored from upstream v4.9.337) already provides
+# the generic cache-maintenance primitives the kernel needs to build/run.

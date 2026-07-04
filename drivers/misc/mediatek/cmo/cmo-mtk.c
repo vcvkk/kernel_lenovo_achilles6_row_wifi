@@ -48,6 +48,28 @@ void inner_dcache_flush_all(void)
 }
 EXPORT_SYMBOL(inner_dcache_flush_all);
 
+/*
+ * The real (hardware-specific) implementations of these three primitives
+ * live in cache-mtk-v8.S, which is absent from this vendor tree (see
+ * arch/arm64/mm/Makefile). Provide weak stub fallbacks so the tree links,
+ * matching the same pattern already used for __inner_flush_dcache_all in
+ * mrdump.h.
+ */
+__weak void __inner_flush_dcache_L1(void)
+{
+	pr_notice("%s:weak function.\n", __func__);
+}
+
+__weak void __inner_flush_dcache_L2(void)
+{
+	pr_notice("%s:weak function.\n", __func__);
+}
+
+__weak void __disable_dcache(void)
+{
+	pr_notice("%s:weak function.\n", __func__);
+}
+
 void inner_dcache_flush_L1(void)
 {
 	__inner_flush_dcache_L1();

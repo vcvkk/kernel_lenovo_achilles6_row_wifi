@@ -35,6 +35,7 @@
 #include <asm/atomic.h>
 #include <asm/barrier.h>
 #include <asm/bug.h>
+#include <asm/cpufeature.h>
 #include <asm/debug-monitors.h>
 #include <asm/esr.h>
 #include <asm/insn.h>
@@ -278,33 +279,17 @@ void die(const char *str, struct pt_regs *regs, int err)
 {
 	struct thread_info *thread = current_thread_info();
 	int ret;
-	int cpu = -1;
-	static int die_owner = -1;
+	unsigned long flags;
 
 	if (ESR_ELx_EC(err) == ESR_ELx_EC_DABT_CUR)
 		thread->cpu_excp++;
 
-	if (die_owner == -1)
-		aee_save_excp_regs(regs);
+	aee_save_excp_regs(regs);
+
+	raw_spin_lock_irqsave(&die_lock, flags);
 
 	oops_enter();
 
-	cpu = get_cpu();
-	if (!raw_spin_trylock_irq(&die_lock)) {
-		if (cpu != die_owner) {
-			pr_notice("die_lock:cpu:%d trylock failed(owner:%d)\n",
-				cpu, die_owner);
-			dump_stack();
-			put_cpu();
-			while (1)
-				cpu_relax();
-		} else {
-			pr_notice("die_lock:cpu:%d already locked(owner:%d)\n",
-				cpu, die_owner);
-			dump_stack();
-		}
-	}
-	die_owner = cpu;
 	console_verbose();
 	bust_spinlocks(1);
 	ret = __die(str, err, regs);
@@ -314,13 +299,15 @@ void die(const char *str, struct pt_regs *regs, int err)
 
 	bust_spinlocks(0);
 	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
-	raw_spin_unlock_irq(&die_lock);
 	oops_exit();
 
 	if (in_interrupt())
 		panic("Fatal exception in interrupt");
 	if (panic_on_oops)
 		panic("Fatal exception");
+
+	raw_spin_unlock_irqrestore(&die_lock, flags);
+
 	if (ret != NOTIFY_STOP)
 		do_exit(SIGSEGV);
 }
@@ -463,10 +450,9 @@ asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
 	force_signal_inject(SIGILL, ILL_ILLOPC, regs, 0);
 }
 
-int cpu_enable_cache_maint_trap(void *__unused)
+void cpu_enable_cache_maint_trap(const struct arm64_cpu_capabilities *__unused)
 {
 	config_sctlr_el1(SCTLR_EL1_UCI, 0);
-	return 0;
 }
 
 #define __user_cache_maint(insn, address, res)			\
@@ -608,14 +594,6 @@ asmlinkage long do_ni_syscall(struct pt_regs *regs)
 	}
 #endif
 
-	if (show_unhandled_signals_ratelimited()) {
-		pr_info("%s[%d]: syscall %d\n", current->comm,
-			task_pid_nr(current), (int)regs->syscallno);
-		dump_instr("", regs);
-		if (user_mode(regs))
-			__show_regs(regs);
-	}
-
 	return sys_ni_syscall();
 }
 
@@ -692,7 +670,6 @@ asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
 		handler[reason], smp_processor_id(), esr,
 		esr_get_class_string(esr));
 
-	die("Oops - bad mode", regs, 0);
 	local_irq_disable();
 	panic("bad mode");
 }

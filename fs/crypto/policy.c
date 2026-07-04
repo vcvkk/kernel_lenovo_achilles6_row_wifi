@@ -88,6 +88,10 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	if (ret == -ENODATA) {
 		if (!S_ISDIR(inode->i_mode))
 			ret = -ENOTDIR;
+		else if (IS_DEADDIR(inode))
+			ret = -ENOENT;
+		else if (!inode->i_sb->s_cop->empty_dir)
+			ret = -EOPNOTSUPP;
 		else if (!inode->i_sb->s_cop->empty_dir(inode))
 			ret = -ENOTEMPTY;
 		else
@@ -100,6 +104,9 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 		ret = 0;
 	} else if (ret >= 0 || ret == -ERANGE) {
 		/* The file already uses a different encryption policy. */
+		printk(KERN_WARNING
+		       "%s: Policy inconsistent with encryption context\n",
+		       __func__);
 		ret = -EEXIST;
 	}
 
@@ -166,8 +173,7 @@ EXPORT_SYMBOL(fscrypt_ioctl_get_policy);
  * malicious offline violations of this constraint, while the link and rename
  * checks are needed to prevent online violations of this constraint.
  *
- * Return: 1 if permitted, 0 if forbidden.  If forbidden, the caller must fail
- * the filesystem operation with EPERM.
+ * Return: 1 if permitted, 0 if forbidden.
  */
 int fscrypt_has_permitted_context(struct inode *parent, struct inode *child)
 {

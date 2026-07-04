@@ -156,6 +156,17 @@ static void squashfs_process_blocks(struct squashfs_read_request *req)
 		squashfs_bh_to_actor(bh, nr_buffers, req->output, req->offset,
 			req->length, msblk->devblksize);
 	} else if (req->data_processing == SQUASHFS_DECOMPRESS) {
+		/*
+		 * Squashfs may read (and decompress) the compression options
+		 * metadata block before the decompressor stream has been set
+		 * up (e.g. while probing/mounting), which would otherwise
+		 * lead to a NULL pointer dereference on a corrupt/malicious
+		 * image. See upstream "squashfs: more metadata hardening".
+		 */
+		if (!msblk->stream) {
+			error = -EIO;
+			goto cleanup;
+		}
 		req->length = squashfs_decompress(msblk, bh, nr_buffers,
 			req->offset, req->length, actor);
 		if (req->length < 0) {

@@ -59,6 +59,7 @@ static int dock_pogo_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *node = dev->of_node;
+	int ret;
 
 	dock_status = of_get_named_gpio(node, "dock_status", 0);
 	if (dock_status < 0)
@@ -80,7 +81,9 @@ static int dock_pogo_probe(struct platform_device *pdev)
 	gpio_request(usb_status,"usb_status");
 	gpio_direction_input(usb_status);
 
-  	power_supply_register(&pdev->dev, &dock_pogo_desc,NULL);
+  	ret = PTR_ERR_OR_ZERO(power_supply_register(&pdev->dev, &dock_pogo_desc, NULL));
+	if (ret)
+		dev_warn(&pdev->dev, "failed to register power supply: %d\n", ret);
     return 0;
 }
 
